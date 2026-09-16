@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Football Arena Pro - Multiplayer</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #080c14;
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #00ff87;
+            --secondary: #60a5fa;
+            --danger: #ff4757;
+            --border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --player-card: rgba(255, 255, 255, 0.03);
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f0f4f8;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --primary: #059669;
+            --secondary: #2563eb;
+            --danger: #dc2626;
+            --border: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.03);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            --player-card: rgba(0, 0, 0, 0.02);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 255, 135, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(96, 165, 250, 0.08) 0%, transparent 40%);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-color);
+            padding: 10px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: var(--shadow);
+        }
+
+        .hidden { display: none !important; }
+
+        h1, h2, h3 { text-align: center; text-transform: uppercase; }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        h2 { font-size: 1.5rem; color: var(--secondary); margin-bottom: 20px; }
+
+        .form-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        select option { background-color: var(--bg-color); color: var(--text-color); }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #000;
+            font-weight: 800;
+            font-size: 1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 255, 135, 0.2);
+            margin-top: 15px;
+        }
+
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        .quiz-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .session-header {
+            flex-grow: 1;
+            background: linear-gradient(90deg, rgba(0, 255, 137, 0.15), rgba(96, 165, 250, 0.15));
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .btn-exit-top {
+            background: rgba(255, 71, 87, 0.15);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 12px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-exit-top:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .question-card {
+            background: var(--input-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .players-answer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .players-answer-grid { grid-template-columns: 1fr; }
+            .quiz-top-bar { flex-direction: column-reverse; }
+            .btn-exit-top { width: 100%; justify-content: center; }
+        }
+
+        .player-input-card {
+            background: var(--player-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 15px;
+        }
+
+        .player-input-card h4 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .option-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            color: var(--text-color);
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .option-btn.selected {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+        }
+
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .score-table th, .score-table td {
+            padding: 14px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .score-table th { color: var(--secondary); font-weight: 700; }
+
+        .winner-box {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+            border: 2px solid #ffd700;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .error-msg { color: #ff4757; font-size: 0.9rem; margin-top: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fa-solid fa-moon" id="theme-icon"></i> <span id="theme-text">Mode Malam</span>
+    </button>
+
+    <div class="container">
+        <!-- 1. AUTH SCREEN -->
+        <div id="screen-auth" class="screen-item">
+            <h1><i class="fa-solid fa-futbol"></i> Quiz Football</h1>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> Password Akses:</label>
+                <input type="password" id="password" placeholder="Masukkan password...">
+                <div id="auth-error" class="error-msg hidden">Password salah! Harus mengandung kata 'audedevil'.</div>
+            </div>
+            <button class="btn" onclick="checkAuth()">Masuk Arena</button>
+        </div>
+
+        <!-- 2. SETUP PLAYERS -->
+        <div id="screen-setup" class="screen-item hidden">
+            <h2><i class="fa-solid fa-users"></i> Pengaturan Pemain</h2>
+            <div class="form-group">
+                <label>Jumlah Pemain:</label>
+                <select id="player-count" onchange="generateNameInputs()">
+                    <option value="1">1 Orang</option>
+                    <option value="2">2 Orang</option>
+                    <option value="3">3 Orang</option>
+                    <option value="4">4 Orang</option>
+                </select>
+            </div>
+            <div id="player-names-container"></div>
+            <button class="btn" onclick="startGameSetup()">Mulai Game</button>
+        </div>
+
+        <!-- 3. QUIZ SCREEN -->
+        <div id="screen-quiz" class="screen-item hidden">
+            <div class="quiz-top-bar">
+                <div class="session-header" id="quiz-session-badge">Sesi 1</div>
+                <!-- HANYA TERSIASA TOMBOL KELUAR INI -->
+                <button class="btn-exit-top" onclick="exitQuiz()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+            </div>
+
+            <div class="question-card">
+                <h3 id="question-number">Soal 1</h3>
+                <p id="question-text" style="margin-top:10px; font-weight:600; font-size: 1.1rem;"></p>
+            </div>
+            
+            <div class="players-answer-grid" id="players-answer-container"></div>
+
+            <button class="btn" onclick="submitAllAnswers()">Kirim Jawaban Soal Ini</button>
+        </div>
+
+        <!-- 4. RECAP PER SESSION SCREEN -->
+        <div id="screen-recap" class="screen-item hidden">
+            <h2 id="recap-title">Rekap Sesi</h2>
+            <table class="score-table">
+                <thead>
+                    <tr>
+                        <th>Pemain</th>
+                        <th>Skor Sesi Ini</th>
+                        <th>Total Sementara</th>
+                    </tr>
+                </thead>
+                <tbody id="recap-table-body"></tbody>
+            </table>
+            <button class="btn" onclick="nextSessionOrFinish()">Lanjut Ke Sesi Berikutnya</button>
+        </div>
+
+        <!-- 5. FINAL RESULT SCREEN -->
+        <div id="screen-final" class="screen-item hidden">
+            <h2><i class="fa-solid fa-trophy"></i> Hasil Akhir Quiz</h2>
+            <div class="winner-box">
+                <i class="fa-solid fa-crown" style="font-size: 3rem; color: #ffd700; margin-bottom: 10px;"></i>
+                <h3 id="winner-name" style="color:#ffd700;">JUARA: -</h3>
+                <p id="winner-score" style="margin-top: 5px; font-weight: 700;">Skor Akhir: 0</p>
+            </div>
+            <table class="score-table">
+                <thead>
+                    <tr>
+                        <th>Peringkat</th>
+                        <th>Nama Pemain</th>
+                        <th>Skor Akhir (Total x 2)</th>
+                    </tr>
+                </thead>
+                <tbody id="final-table-body"></tbody>
+            </table>
+            <button class="btn" onclick="resetGameToSetup()"><i class="fa-solid fa-rotate-right"></i> Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = {
+            s1: [
+                { q: "UCL diadakan pertama kali tahun?", options: ["1945", "1955", "1965", "1975"], ans: "b" },
+                { q: "Tim mana yang paling banyak memenangkan UCL?", options: ["Real Madrid", "Barcelona", "AC Milan", "Liverpool"], ans: "a" },
+                { q: "Ada Berapa tim Bundesliga yang pernah menjuarai UCL?", options: ["1", "2", "3", "4"], ans: "c" },
+                { q: "Di EPL hanya ada 2 klub yang memenangi 1 UCL saja, yaitu Manchester City dan ...", options: ["Liverpool", "Nottingham Forest", "Chelsea", "Aston Villa"], ans: "d" },
+                { q: "Gol salto ikonik Cristiano Ronaldo final UCL 2018 adalah gol ke berapa untuk Madrid pada laga malam itu?", options: ["1", "2", "3", "4"], ans: "b" },
+                { q: "Negara mana yang paling banyak menjadi runner up Piala Dunia tanpa memenangkannya sekalipun?", options: ["Kroasia", "Hungaria", "Cekoslovakia", "Belanda"], ans: "d" },
+                { q: "Siapa pemain timnas Italia yang memiliki julukan 'Mati Berdiri'?", options: ["Filippo Inzaghi", "Roberto Baggio", "Donnarumma", "Paolo Maldini"], ans: "b" },
+                { q: "Sebelum Piala Dunia tahun 2026 ada tim di 3 gelaran dia selalu kalah oleh Italia, negara manakah itu?", options: ["Pantai Gading", "Kroasia", "Belgia", "Norwegia"], ans: "d" },
+                { q: "Siapa negara Asia pertama yang mengikuti Piala Dunia?", options: ["Jepang", "Korea Selatan", "Indonesia", "Malaysia"], ans: "c" },
+                { q: "Timnas mana yang berhasil mencapai final Piala Dunia 4 kali tidak lebih?", options: ["Prancis", "Belanda", "Argentina", "Jerman"], ans: "a" }
+            ],
+            s2: [
+                { q: "Siapa pemain terbaik UCL 2025/2026?", keywords: ["kvaratskhelia", "kvara"] },
+                { q: "Sebelum melaju ke final UCL pada tahun 22/23 Inter Milan menghadapi siapa di semifinal?", keywords: ["ac milan", "milan"] },
+                { q: "Pada semifinal Piala Dunia 2010 Spanyol berhasil menang melawan tim yang dihadapi dengan skor 1-0, gol semata wayang Spanyol dicetak oleh?", keywords: ["puyol"] },
+                { q: "Siapa pencetak assist terbanyak di Piala Dunia all time?", keywords: ["messi"] },
+                { q: "Siapa yang menjadi juara Piala Asia terbanyak?", keywords: ["jepang", "japan"] }
+            ],
+            s3: [
+                { q: "Siapa pemain AC Milan yang paling banyak meraih UCL?", keywords: ["maldini"] },
+                { q: "Pada 16 besar UCL tahun 2018/2019 Liverpool menghadapi tim?", keywords: ["bayern", "munchen", "münchen"] },
+                { q: "Pada semifinal UCL 2013/2014 Real Madrid menghadapi tim apa?", keywords: ["bayern", "munchen", "münchen"] },
+                { q: "Siapakah aku? Aku dari La Masia, lalu ke Arsenal, lalu ke Barcelona, lalu ke Chelsea, lalu ke AS Monaco, dan pensiun di Como?", keywords: ["fabregas"] },
+                { q: "Top skor timnas yang pertama adalah Abdul Kadir, lalu ada Iswadi Idris, lalu yang ketiga adalah?", keywords: ["bambang", "pamungkas", "bepe"] }
+            ]
+        };
+
+        let gameState = {
+            isLoggedIn: false,
+            screen: 'auth',
+            players: [],
+            currentSession: 1,
+            currentQuestionIdx: 0,
+            theme: 'dark'
+        };
+
+        let currentOptionsSelected = {};
+
+        window.onload = () => {
+            const savedState = localStorage.getItem('quiz_football_state_v2');
+            if (savedState) {
+                gameState = JSON.parse(savedState);
+                if (gameState.theme) applyTheme(gameState.theme);
+                restoreScreen();
+            } else {
+                generateNameInputs();
+            }
+        };
+
+        function saveState() {
+            localStorage.setItem('quiz_football_state_v2', JSON.stringify(gameState));
+        }
+
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (theme === 'light') {
+                icon.className = 'fa-solid fa-sun';
+                text.innerText = 'Mode Siang';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+                text.innerText = 'Mode Malam';
+            }
+        }
+
+        function toggleTheme() {
+            gameState.theme = gameState.theme === 'light' ? 'dark' : 'light';
+            applyTheme(gameState.theme);
+            saveState();
+        }
+
+        function checkAuth() {
+            const pass = document.getElementById('password').value;
+            if (pass.toLowerCase().includes('audedevil')) {
+                gameState.isLoggedIn = true;
+                gameState.screen = 'setup';
+                saveState();
+                restoreScreen();
+            } else {
+                document.getElementById('auth-error').classList.remove('hidden');
+            }
+        }
+
+        function generateNameInputs() {
+            const count = parseInt(document.getElementById('player-count').value);
+            const container = document.getElementById('player-names-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                container.innerHTML += `
+                    <div class="form-group">
+                        <label>Nama Pemain ${i}:</label>
+                        <input type="text" class="player-name-input" value="Pemain ${i}">
+                    </div>
+                `;
+            }
+        }
+
+        function startGameSetup() {
+            const inputs = document.querySelectorAll('.player-name-input');
+            gameState.players = [];
+            inputs.forEach((input, index) => {
+                gameState.players.push({
+                    name: input.value || `Pemain ${index + 1}`,
+                    scores: { s1: 0, s2: 0, s3: 0 },
+                    totalRaw: 0,
+                    finalScore: 0
+                });
+            });
+            
+            gameState.currentSession = 1;
+            gameState.currentQuestionIdx = 0;
+            gameState.screen = 'quiz';
+            saveState();
+            restoreScreen();
+        }
+
+        function exitQuiz() {
+            if (confirm("Apakah kamu yakin ingin keluar dari kuis? Seluruh progres permainan saat ini akan direset.")) {
+                resetGameToSetup();
+            }
+        }
+
+        function restoreScreen() {
+            hideAllScreens();
+            if (!gameState.isLoggedIn) {
+                document.getElementById('screen-auth').classList.remove('hidden');
+                return;
+            }
+
+            if (gameState.screen === 'setup') {
+                document.getElementById('screen-setup').classList.remove('hidden');
+                generateNameInputs();
+            } else if (gameState.screen === 'quiz') {
+                document.getElementById('screen-quiz').classList.remove('hidden');
+                renderQuestion();
+            } else if (gameState.screen === 'recap') {
+                showSessionRecap();
+            } else if (gameState.screen === 'final') {
+                showFinalResults();
+            }
+        }
+
+        function renderQuestion() {
+            const session = gameState.currentSession;
+            const qIdx = gameState.currentQuestionIdx;
+            currentOptionsSelected = {};
+
+            const sessionNames = ["", "Sesi 1: Pilihan Ganda", "Sesi 2: Essay", "Sesi 3: Betting (Taruhan)"];
+            document.getElementById('quiz-session-badge').innerText = sessionNames[session];
+
+            const totalQ = session === 1 ? questions.s1.length : (session === 2 ? questions.s2.length : questions.s3.length);
+            document.getElementById('question-number').innerText = `Soal ${qIdx + 1} / ${totalQ}`;
+
+            const qData = session === 1 ? questions.s1[qIdx] : (session === 2 ? questions.s2[qIdx] : questions.s3[qIdx]);
+            document.getElementById('question-text').innerText = qData.q;
+
+            const container = document.getElementById('players-answer-container');
+            container.innerHTML = '';
+
+            gameState.players.forEach((player, pIdx) => {
+                let inputHTML = '';
+
+                if (session === 1) {
+                    const labels = ['a', 'b', 'c', 'd'];
+                    let optionsHTML = '';
+                    qData.options.forEach((opt, oIdx) => {
+                        optionsHTML += `
+                            <button class="option-btn opt-btn-${pIdx}" onclick="selectOption(${pIdx}, '${labels[oIdx]}', this)">
+                                <b>${labels[oIdx].toUpperCase()}.</b> ${opt}
+                            </button>
+                        `;
+                    });
+                    inputHTML = `<div class="options-grid">${optionsHTML}</div>`;
+                } else if (session === 2) {
+                    inputHTML = `
+                        <input type="text" id="ans-essay-${pIdx}" placeholder="Masukkan jawaban...">
+                    `;
+                } else if (session === 3) {
+                    inputHTML = `
+                        <div class="form-group" style="margin-bottom:8px;">
+                            <label>Jumlah Taruhan (1-5 Poin):</label>
+                            <select id="bet-amount-${pIdx}">
+                                <option value="1">1 Poin</option>
+                                <option value="2">2 Poin</option>
+                                <option value="3">3 Poin</option>
+                                <option value="4">4 Poin</option>
+                                <option value="5">5 Poin</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Jawaban:</label>
+                            <input type="text" id="ans-bet-${pIdx}" placeholder="Masukkan jawaban...">
+                        </div>
+                    `;
+                }
+
+                container.innerHTML += `
+                    <div class="player-input-card">
+                        <h4><i class="fa-solid fa-user"></i> ${player.name}</h4>
+                        ${inputHTML}
+                    </div>
+                `;
+            });
+        }
+
+        function selectOption(playerIdx, value, btn) {
+            document.querySelectorAll(`.opt-btn-${playerIdx}`).forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            currentOptionsSelected[playerIdx] = value;
+        }
+
+        function checkFlexibleAnswer(userInput, keywords) {
+            const input = userInput.toLowerCase();
+            return keywords.some(kw => input.includes(kw));
+        }
+
+        function submitAllAnswers() {
+            const session = gameState.currentSession;
+            const qIdx = gameState.currentQuestionIdx;
+
+            for (let i = 0; i < gameState.players.length; i++) {
+                if (session === 1) {
+                    if (!currentOptionsSelected[i]) {
+                        alert(`Pemain ${gameState.players[i].name} belum memilih jawaban!`);
+                        return;
+                    }
+                } else if (session === 2) {
+                    const val = document.getElementById(`ans-essay-${i}`).value.trim();
+                    if (!val) {
+                        alert(`Jawaban ${gameState.players[i].name} masih kosong!`);
+                        return;
+                    }
+                } else if (session === 3) {
+                    const val = document.getElementById(`ans-bet-${i}`).value.trim();
+                    if (!val) {
+                        alert(`Jawaban taruhan ${gameState.players[i].name} masih kosong!`);
+                        return;
+                    }
+                }
+            }
+
+            gameState.players.forEach((player, i) => {
+                if (session === 1) {
+                    if (currentOptionsSelected[i] === questions.s1[qIdx].ans) {
+                        player.scores.s1 += 1;
+                    }
+                } else if (session === 2) {
+                    const val = document.getElementById(`ans-essay-${i}`).value.trim();
+                    if (checkFlexibleAnswer(val, questions.s2[qIdx].keywords)) {
+                        player.scores.s2 += 3;
+                    }
+                } else if (session === 3) {
+                    const bet = parseInt(document.getElementById(`bet-amount-${i}`).value);
+                    const val = document.getElementById(`ans-bet-${i}`).value.trim();
+                    if (checkFlexibleAnswer(val, questions.s3[qIdx].keywords)) {
+                        player.scores.s3 += bet;
+                    } else {
+                        player.scores.s3 -= bet;
+                    }
+                }
+            });
+
+            const totalQuestionsInSession = session === 1 ? questions.s1.length : (session === 2 ? questions.s2.length : questions.s3.length);
+            gameState.currentQuestionIdx++;
+
+            if (gameState.currentQuestionIdx >= totalQuestionsInSession) {
+                gameState.screen = 'recap';
+                saveState();
+                showSessionRecap();
+            } else {
+                saveState();
+                renderQuestion();
+            }
+        }
+
+        function showSessionRecap() {
+            hideAllScreens();
+            document.getElementById('screen-recap').classList.remove('hidden');
+            document.getElementById('recap-title').innerText = `Rekap Sesi ${gameState.currentSession}`;
+            const tbody = document.getElementById('recap-table-body');
+            tbody.innerHTML = '';
+
+            gameState.players.forEach(p => {
+                const sessionScore = p.scores[`s${gameState.currentSession}`];
+                const totalSoFar = p.scores.s1 + p.scores.s2 + p.scores.s3;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${p.name}</b></td>
+                        <td>${sessionScore > 0 ? '+' + sessionScore : sessionScore}</td>
+                        <td>${totalSoFar}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function nextSessionOrFinish() {
+            if (gameState.currentSession < 3) {
+                gameState.currentSession++;
+                gameState.currentQuestionIdx = 0;
+                gameState.screen = 'quiz';
+                saveState();
+                restoreScreen();
+            } else {
+                gameState.screen = 'final';
+                saveState();
+                showFinalResults();
+            }
+        }
+
+        function showFinalResults() {
+            hideAllScreens();
+            document.getElementById('screen-final').classList.remove('hidden');
+
+            gameState.players.forEach(p => {
+                p.totalRaw = p.scores.s1 + p.scores.s2 + p.scores.s3;
+                p.finalScore = p.totalRaw * 2;
+            });
+
+            const sortedPlayers = [...gameState.players].sort((a, b) => b.finalScore - a.finalScore);
+
+            document.getElementById('winner-name').innerText = `JUARA: ${sortedPlayers[0].name}`;
+            document.getElementById('winner-score').innerText = `Skor Akhir: ${sortedPlayers[0].finalScore} Poin`;
+
+            const tbody = document.getElementById('final-table-body');
+            tbody.innerHTML = '';
+            sortedPlayers.forEach((p, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${idx + 1}</td>
+                        <td><b>${p.name}</b></td>
+                        <td><span style="color:var(--primary); font-weight:800;">${p.finalScore}</span> (${p.totalRaw} x 2)</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function resetGameToSetup() {
+            gameState.screen = 'setup';
+            gameState.currentSession = 1;
+            gameState.currentQuestionIdx = 0;
+            saveState();
+            restoreScreen();
+        }
+
+        function hideAllScreens() {
+            document.querySelectorAll('.screen-item').forEach(div => div.classList.add('hidden'));
+        }
+    </script>
+</body>
+</html>
